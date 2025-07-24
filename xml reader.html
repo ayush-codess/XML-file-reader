@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -806,3 +807,70 @@
             const lowerFieldName = fieldName.toLowerCase();
             return iconMap[lowerFieldName] || '📄';
         }
+
+        // Demo data loader
+        window.addEventListener('load', () => {
+            // Create sample XML for demo
+            const sampleXML = `<?xml version="1.0" encoding="UTF-8"?>
+<company>
+    <employees>
+        <employee id="1" department="IT">
+            <name>John Doe</name>
+            <position>Software Developer</position>
+            <email>john.doe@company.com</email>
+            <skills>JavaScript, Python, React</skills>
+        </employee>
+        <employee id="2" department="HR">
+            <name>Jane Smith</name>
+            <position>HR Manager</position>
+            <email>jane.smith@company.com</email>
+            <skills>Management, Communication, Training</skills>
+        </employee>
+        <employee id="3" department="IT">
+            <name>Mike Johnson</name>
+            <position>DevOps Engineer</position>
+            <email>mike.johnson@company.com</email>
+            <skills>Docker, Kubernetes, AWS</skills>
+        </employee>
+    </employees>
+    <projects>
+        <project status="active">
+            <name>Website Redesign</name>
+            <manager>John Doe</manager>
+            <description>Redesigning the company website with modern UI/UX</description>
+        </project>
+        <project status="completed">
+            <name>Employee Management System</name>
+            <manager>Jane Smith</manager>
+            <description>Internal system for managing employee data</description>
+        </project>
+    </projects>
+</company>`;
+
+            // Add sample data button
+            const sampleBtn = document.createElement('button');
+            sampleBtn.innerHTML = '🎯 Load Sample Data';
+            sampleBtn.style.cssText = `
+                margin-top: 15px;
+                padding: 12px 24px;
+                background: linear-gradient(135deg, #667eea, #764ba2);
+                color: white;
+                border: none;
+                border-radius: 25px;
+                cursor: pointer;
+                font-weight: 500;
+                transition: all 0.3s ease;
+            `;
+            sampleBtn.onmouseover = () => sampleBtn.style.transform = 'scale(1.05)';
+            sampleBtn.onmouseout = () => sampleBtn.style.transform = 'scale(1)';
+            sampleBtn.onclick = () => {
+                const parser = new DOMParser();
+                xmlData = parser.parseFromString(sampleXML, 'text/xml');
+                showStatus('✅ Sample data loaded! Try searching for "John", "IT", or "Website"', 'success');
+                searchInput.focus();
+            };
+            uploadStatus.appendChild(sampleBtn);
+        });
+    </script>
+</body>
+</html>
