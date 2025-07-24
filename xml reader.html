@@ -1,0 +1,809 @@
+!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XML Data Search</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 40px 0;
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .header p {
+            color: rgba(255,255,255,0.9);
+            font-size: 1.2rem;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+
+        .upload-section {
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            animation: fadeInUp 0.8s ease-out 0.4s both;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: linear-gradient(145deg, #f8f9ff, #e8ecff);
+        }
+
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: linear-gradient(145deg, #e8ecff, #f8f9ff);
+            transform: translateY(-2px);
+        }
+
+        .upload-area.dragover {
+            border-color: #764ba2;
+            background: linear-gradient(145deg, #e8ecff, #d0d8ff);
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .search-section {
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            animation: fadeInUp 0.8s ease-out 0.6s both;
+        }
+
+        .search-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 20px 60px 20px 25px;
+            font-size: 1.1rem;
+            border: 2px solid #e0e6ed;
+            border-radius: 50px;
+            outline: none;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .search-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .search-btn {
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 50px;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-50%) scale(1.05);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .filters {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .filter-btn {
+            padding: 10px 20px;
+            border: 2px solid #e0e6ed;
+            border-radius: 25px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .filter-btn.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-color: transparent;
+        }
+
+        .results-section {
+            animation: fadeInUp 0.8s ease-out 0.8s both;
+        }
+
+        .results-header {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px 15px 0 0;
+            padding: 20px 30px;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .results-container {
+            background: transparent;
+            border-radius: 20px;
+            max-height: 600px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .result-item {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 25px 30px;
+            margin-bottom: 20px;
+            border: 2px solid rgba(102, 126, 234, 0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+
+        .result-item:hover {
+            background: rgba(255, 255, 255, 1);
+            border-color: rgba(102, 126, 234, 0.3);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+
+        .name-highlight {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: inline-block;
+            margin: 10px 0;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        }
+
+        .name-parts {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+
+        .first-name, .last-name {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .first-name {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+        }
+
+        .last-name {
+            background: linear-gradient(135deg, #2196F3, #1976D2);
+            color: white;
+        }
+
+        .result-separator {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.3), transparent);
+            margin: 25px 0;
+        }
+
+        .result-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .result-details {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+
+        .result-tag {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .result-content {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 60px 30px;
+            color: #666;
+        }
+
+        .no-results-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .status-message {
+            text-align: center;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-weight: 500;
+        }
+
+        .success {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+        }
+
+        .error {
+            background: linear-gradient(135deg, #f44336, #da190b);
+            color: white;
+        }
+
+        .info {
+            background: linear-gradient(135deg, #2196F3, #0b7dda);
+            color: white;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .loading {
+            animation: pulse 1.5s infinite;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            .upload-section,
+            .search-section {
+                padding: 20px;
+            }
+            
+            .filters {
+                justify-content: center;
+            }
+            
+            .result-details {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🔍 XML Data Explorer</h1>
+            <p>Upload your XML file and search through your data with style</p>
+        </div>
+
+        <!-- Upload Section -->
+        <div class="upload-section">
+            <h2 style="margin-bottom: 20px; color: #333; font-size: 1.5rem;">📁 Upload XML File</h2>
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📤</div>
+                <h3 style="color: #667eea; margin-bottom: 10px;">Drop your XML file here</h3>
+                <p style="color: #666;">or click to browse</p>
+                <input type="file" id="fileInput" accept=".xml" style="display: none;">
+            </div>
+            <div id="uploadStatus"></div>
+        </div>
+
+        <!-- Search Section -->
+        <div class="search-section">
+            <h2 style="margin-bottom: 20px; color: #333; font-size: 1.5rem;">🔍 Search Data</h2>
+            <div class="search-container">
+                <input type="text" class="search-input" id="searchInput" placeholder="Search for names, data, or any content...">
+                <button class="search-btn" id="searchBtn">🔍</button>
+            </div>
+            <div class="filters">
+                <button class="filter-btn active" data-filter="all">All Results</button>
+                <button class="filter-btn" data-filter="name">Names</button>
+                <button class="filter-btn" data-filter="text">Text Content</button>
+                <button class="filter-btn" data-filter="attribute">Attributes</button>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="results-section" id="resultsSection" style="display: none;">
+            <div class="results-header">
+                <h2 style="color: #333; font-size: 1.4rem;">📊 Search Results</h2>
+                <p id="resultsCount" style="color: #666; margin-top: 5px;"></p>
+            </div>
+            <div class="results-container" id="resultsContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        let xmlData = null;
+        let searchResults = [];
+        let currentFilter = 'all';
+
+        // DOM Elements
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const uploadStatus = document.getElementById('uploadStatus');
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const resultsSection = document.getElementById('resultsSection');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const resultsCount = document.getElementById('resultsCount');
+        const filterBtns = document.querySelectorAll('.filter-btn');
+
+        // File Upload Handlers
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) handleFile(files[0]);
+        });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) handleFile(e.target.files[0]);
+        });
+
+        // Search Handlers
+        searchBtn.addEventListener('click', performSearch);
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') performSearch();
+        });
+
+        // Filter Handlers
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentFilter = btn.dataset.filter;
+                displayResults(searchResults);
+            });
+        });
+
+        function showStatus(message, type = 'info') {
+            uploadStatus.innerHTML = `<div class="status-message ${type}">${message}</div>`;
+            setTimeout(() => {
+                if (type !== 'success') uploadStatus.innerHTML = '';
+            }, 5000);
+        }
+
+        function handleFile(file) {
+            if (!file.name.toLowerCase().endsWith('.xml')) {
+                showStatus('❌ Please select a valid XML file', 'error');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const parser = new DOMParser();
+                    xmlData = parser.parseFromString(e.target.result, 'text/xml');
+                    
+                    if (xmlData.getElementsByTagName('parsererror').length > 0) {
+                        showStatus('❌ Invalid XML format. Please check your file.', 'error');
+                        return;
+                    }
+
+                    showStatus(`✅ Successfully loaded: ${file.name}`, 'success');
+                    searchInput.focus();
+                } catch (error) {
+                    showStatus('❌ Error parsing XML file', 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function performSearch() {
+            const query = searchInput.value.trim();
+            
+            if (!xmlData) {
+                showStatus('⚠️ Please upload an XML file first', 'error');
+                return;
+            }
+
+            if (!query) {
+                resultsSection.style.display = 'none';
+                return;
+            }
+
+            searchResults = searchInXML(xmlData, query);
+            displayResults(searchResults);
+            resultsSection.style.display = 'block';
+        }
+
+        function searchInXML(xmlDoc, query) {
+            const results = [];
+            const searchTerm = query.toLowerCase();
+
+            function getElementDetails(element) {
+                const details = {
+                    attributes: {},
+                    children: {},
+                    textContent: ''
+                };
+
+                // Get all attributes
+                if (element.attributes) {
+                    for (let attr of element.attributes) {
+                        details.attributes[attr.name] = attr.value;
+                    }
+                }
+
+                // Get all child elements and their content
+                if (element.childNodes) {
+                    for (let node of element.childNodes) {
+                        if (node.nodeType === Node.ELEMENT_NODE) {
+                            const childName = node.tagName;
+                            const childText = node.textContent.trim();
+                            if (childText) {
+                                details.children[childName] = childText;
+                            }
+                            // Also get child attributes
+                            if (node.attributes && node.attributes.length > 0) {
+                                const childAttrs = {};
+                                for (let attr of node.attributes) {
+                                    childAttrs[attr.name] = attr.value;
+                                }
+                                details.children[childName + '_attributes'] = childAttrs;
+                            }
+                        } else if (node.nodeType === Node.TEXT_NODE) {
+                            const text = node.textContent.trim();
+                            if (text) {
+                                details.textContent = text;
+                            }
+                        }
+                    }
+                }
+
+                return details;
+            }
+
+            function searchElement(element, path = '') {
+                const tagName = element.tagName || 'text';
+                const currentPath = path ? `${path} > ${tagName}` : tagName;
+                const elementDetails = getElementDetails(element);
+
+                // Search in element name
+                if (tagName.toLowerCase().includes(searchTerm)) {
+                    results.push({
+                        type: 'name',
+                        title: `${tagName}`,
+                        content: `Found in element name`,
+                        path: currentPath,
+                        element: element,
+                        details: elementDetails,
+                        matchedIn: 'Element Name'
+                    });
+                }
+
+                // Search in attributes
+                if (element.attributes) {
+                    for (let attr of element.attributes) {
+                        if (attr.name.toLowerCase().includes(searchTerm) || 
+                            attr.value.toLowerCase().includes(searchTerm)) {
+                            results.push({
+                                type: 'attribute',
+                                title: `${tagName}`,
+                                content: `Found in attribute: ${attr.name} = "${attr.value}"`,
+                                path: currentPath,
+                                element: element,
+                                details: elementDetails,
+                                matchedIn: `Attribute: ${attr.name}`
+                            });
+                        }
+                    }
+                }
+
+                // Search in text content
+                if (element.childNodes) {
+                    for (let node of element.childNodes) {
+                        if (node.nodeType === Node.TEXT_NODE) {
+                            const text = node.textContent.trim();
+                            if (text && text.toLowerCase().includes(searchTerm)) {
+                                results.push({
+                                    type: 'text',
+                                    title: `${tagName}`,
+                                    content: `Found in text content: "${text}"`,
+                                    path: currentPath,
+                                    element: element,
+                                    details: elementDetails,
+                                    matchedIn: 'Text Content'
+                                });
+                            }
+                        } else if (node.nodeType === Node.ELEMENT_NODE) {
+                            // Also check if child element content matches
+                            const childText = node.textContent.trim();
+                            if (childText && childText.toLowerCase().includes(searchTerm)) {
+                                results.push({
+                                    type: 'text',
+                                    title: `${tagName}`,
+                                    content: `Found in child element ${node.tagName}: "${childText}"`,
+                                    path: currentPath,
+                                    element: element,
+                                    details: elementDetails,
+                                    matchedIn: `Child: ${node.tagName}`
+                                });
+                            }
+                            searchElement(node, currentPath);
+                        }
+                    }
+                }
+            }
+
+            const rootElement = xmlDoc.documentElement;
+            if (rootElement) {
+                searchElement(rootElement);
+            }
+
+            // Remove duplicates based on element and path
+            const uniqueResults = [];
+            const seen = new Set();
+            for (let result of results) {
+                const key = result.path + result.element.outerHTML;
+                if (!seen.has(key)) {
+                    seen.add(key);
+                    uniqueResults.push(result);
+                }
+            }
+
+            return uniqueResults;
+        }
+
+        function extractNameParts(fullName) {
+            if (!fullName || typeof fullName !== 'string') return null;
+            
+            const nameParts = fullName.trim().split(/\s+/);
+            if (nameParts.length < 2) return null;
+            
+            return {
+                firstName: nameParts[0],
+                lastName: nameParts[nameParts.length - 1],
+                middleName: nameParts.slice(1, -1).join(' ')
+            };
+        }
+
+        function highlightSearchTerm(text, searchTerm) {
+            if (!text || !searchTerm) return text;
+            
+            const regex = new RegExp(`(${searchTerm})`, 'gi');
+            return text.replace(regex, '<mark style="background: #ffeb3b; padding: 2px 4px; border-radius: 3px; font-weight: bold;">$1</mark>');
+        }
+
+        function displayResults(results) {
+            const filteredResults = currentFilter === 'all' ? 
+                results : results.filter(r => r.type === currentFilter);
+
+            resultsCount.textContent = `Found ${filteredResults.length} result(s)`;
+
+            if (filteredResults.length === 0) {
+                resultsContainer.innerHTML = `
+                    <div class="no-results">
+                        <div class="no-results-icon">🔍</div>
+                        <h3>No results found</h3>
+                        <p>Try adjusting your search terms or filters</p>
+                    </div>
+                `;
+                return;
+            }
+
+            resultsContainer.innerHTML = filteredResults.map((result, index) => {
+                // Extract name from the details
+                let fullName = '';
+                let nameDisplay = '';
+                
+                // Look for name in various fields
+                const nameFields = ['name', 'n', 'title'];
+                for (let field of nameFields) {
+                    if (result.details.children[field]) {
+                        fullName = result.details.children[field];
+                        break;
+                    }
+                }
+
+                // Extract and highlight name parts
+                if (fullName) {
+                    const nameParts = extractNameParts(fullName);
+                    if (nameParts) {
+                        nameDisplay = `
+                            <div class="name-highlight">👤 ${highlightSearchTerm(fullName, searchInput.value)}</div>
+                            <div class="name-parts">
+                                <span class="first-name">First: ${highlightSearchTerm(nameParts.firstName, searchInput.value)}</span>
+                                <span class="last-name">Last: ${highlightSearchTerm(nameParts.lastName, searchInput.value)}</span>
+                                ${nameParts.middleName ? `<span style="background: linear-gradient(135deg, #FF9800, #F57C00); color: white; padding: 6px 12px; border-radius: 20px; font-weight: 600; font-size: 0.9rem;">Middle: ${highlightSearchTerm(nameParts.middleName, searchInput.value)}</span>` : ''}
+                            </div>
+                        `;
+                    } else {
+                        nameDisplay = `<div class="name-highlight">👤 ${highlightSearchTerm(fullName, searchInput.value)}</div>`;
+                    }
+                }
+
+                // Format the detailed information
+                let detailsHtml = '';
+                
+                // Show attributes if any
+                if (result.details.attributes && Object.keys(result.details.attributes).length > 0) {
+                    detailsHtml += '<div style="margin: 15px 0; padding: 15px; background: rgba(102, 126, 234, 0.05); border-radius: 10px; border-left: 4px solid #667eea;"><strong>📋 Attributes:</strong><br>';
+                    for (let [key, value] of Object.entries(result.details.attributes)) {
+                        const highlightedValue = highlightSearchTerm(value, searchInput.value);
+                        const highlightedKey = highlightSearchTerm(key, searchInput.value);
+                        detailsHtml += `<span style="margin-left: 15px; color: #555; display: block; margin-bottom: 3px;">• <strong>${highlightedKey}:</strong> ${highlightedValue}</span>`;
+                    }
+                    detailsHtml += '</div>';
+                }
+
+                // Show all child elements (person details) except name fields
+                if (result.details.children && Object.keys(result.details.children).length > 0) {
+                    detailsHtml += '<div style="margin: 15px 0; padding: 15px; background: rgba(118, 75, 162, 0.05); border-radius: 10px; border-left: 4px solid #764ba2;"><strong>📊 Complete Information:</strong><br>';
+                    for (let [key, value] of Object.entries(result.details.children)) {
+                        if (!key.endsWith('_attributes') && !nameFields.includes(key.toLowerCase())) {
+                            // Format field names nicely
+                            const fieldName = key.charAt(0).toUpperCase() + key.slice(1);
+                            const icon = getFieldIcon(key);
+                            const highlightedValue = highlightSearchTerm(value, searchInput.value);
+                            const highlightedFieldName = highlightSearchTerm(fieldName, searchInput.value);
+                            detailsHtml += `<span style="margin-left: 15px; color: #333; display: block; margin-bottom: 8px; padding: 5px; background: white; border-radius: 5px;">${icon} <strong>${highlightedFieldName}:</strong> ${highlightedValue}</span>`;
+                        }
+                    }
+                    detailsHtml += '</div>';
+                }
+
+                // Show direct text content if any
+                if (result.details.textContent) {
+                    const highlightedText = highlightSearchTerm(result.details.textContent, searchInput.value);
+                    detailsHtml += `<div style="margin: 15px 0; padding: 15px; background: rgba(76, 175, 80, 0.05); border-radius: 10px; border-left: 4px solid #4CAF50;"><strong>📄 Content:</strong><br><span style="margin-left: 15px; color: #555;">${highlightedText}</span></div>`;
+                }
+
+                const highlightedContent = highlightSearchTerm(result.content, searchInput.value);
+
+                return `
+                    <div class="result-item" style="animation: fadeInUp 0.5s ease-out ${index * 0.1}s both;">
+                        ${nameDisplay}
+                        <div class="result-details">
+                            <span class="result-tag">${result.type.toUpperCase()}</span>
+                            <span class="result-tag">🎯 ${result.matchedIn}</span>
+                            <span class="result-tag">📍 ${result.path}</span>
+                        </div>
+                        <div class="result-content" style="margin-top: 15px;">
+                            <div style="color: #666; margin-bottom: 15px; font-style: italic; padding: 10px; background: rgba(0,0,0,0.02); border-radius: 8px; border-left: 3px solid #667eea;"><strong>Match Found:</strong> ${highlightedContent}</div>
+                            ${detailsHtml}
+                        </div>
+                    </div>
+                    ${index < filteredResults.length - 1 ? '<div class="result-separator"></div>' : ''}
+                `;
+            }).join('');
+        }
+
+        function getFieldIcon(fieldName) {
+            const iconMap = {
+                'name': '👤',
+                'n': '👤',
+                'title': '💼',
+                'position': '💼',
+                'role': '💼',
+                'job': '💼',
+                'email': '📧',
+                'mail': '📧',
+                'phone': '📱',
+                'mobile': '📱',
+                'tel': '📱',
+                'address': '🏠',
+                'location': '📍',
+                'city': '🏙️',
+                'country': '🌍',
+                'age': '🎂',
+                'birthday': '🎂',
+                'birth': '🎂',
+                'salary': '💰',
+                'wage': '💰',
+                'income': '💰',
+                'department': '🏢',
+                'division': '🏢',
+                'team': '👥',
+                'manager': '👔',
+                'supervisor': '👔',
+                'skills': '🎯',
+                'skill': '🎯',
+                'expertise': '🎯',
+                'experience': '⭐',
+                'years': '📅',
+                'date': '📅',
+                'joined': '📅',
+                'started': '📅',
+                'status': '📊',
+                'active': '✅',
+                'inactive': '❌',
+                'project': '📋',
+                'description': '📝',
+                'notes': '📝',
+                'comments': '💬',
+                'id': '🆔',
+                'code': '🔢',
+                'number': '🔢'
+            };
+
+            const lowerFieldName = fieldName.toLowerCase();
+            return iconMap[lowerFieldName] || '📄';
+        }
